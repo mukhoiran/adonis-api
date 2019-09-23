@@ -21,10 +21,10 @@ Route.get('/', () => {
 })
 
 Route.get('customers', 'CustomerController.index')
-Route.get('customers/:id', 'CustomerController.show')
+Route.get('customers/:id', 'CustomerController.show').middleware(['findCustomer'])
 Route.post('customers', 'CustomerController.store')
-Route.patch('customers/:id', 'CustomerController.update')
-Route.delete('customers/:id', 'CustomerController.delete')
+Route.patch('customers/:id', 'CustomerController.update').middleware(['findCustomer'])
+Route.delete('customers/:id', 'CustomerController.delete').middleware(['findCustomer'])
 
 Route.get('projects', 'ProjectController.index')
 Route.get('projects/:id', 'ProjectController.show')

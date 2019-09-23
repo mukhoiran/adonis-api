@@ -74,20 +74,13 @@ class CustomerController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params:{id}, response }) {
-    const customer = await Customer.find(id)
+  async show ({ request, params:{id}, response }) {
+    const customer = request.customer
 
-    if(customer){
-      response.status(200).json({
-        message: 'Here is your customer',
-        customer
-      })
-    }else{
-      response.status(404).json({
-        message: 'Customer not found',
-        id
-      })
-    }
+    response.status(200).json({
+      message: 'Here is your customer',
+      data: customer
+    })
   }
 
   /**
@@ -101,27 +94,21 @@ class CustomerController {
   async update ({ params:{id}, request, response }) {
     const { name, description } = request.post()
 
-    const customer = await Customer.find(id)
+    const customer = request.customer
 
-    if(customer){
-      customer.name = name
-      customer.description = description
+    customer.name = name
+    customer.description = description
 
-      const updated = await customer.save()
-      if(updated){
-        response.status(200).json({
-          message: 'Successfully updated customer',
-          id
-        })
-      }else{
-        response.status(500).json({
-          message: 'Could not update customer',
-          id
-        })
-      }
+    const updated = await customer.save()
+
+    if(updated){
+      response.status(200).json({
+        message: 'Successfully updated customer',
+        id
+      })
     }else{
-      response.status(404).json({
-        message: 'Customer not found',
+      response.status(500).json({
+        message: 'Could not update customer',
         id
       })
     }
@@ -135,26 +122,18 @@ class CustomerController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async delete ({ params:{id}, response }) {
-    const customer = await Customer.find(id)
+  async delete ({ request, params:{id}, response }) {
+    const customer = request.customer
+    const deleted = await customer.delete()
 
-    if(customer){
-      const deleted = await customer.delete()
-
-      if(deleted){
-        response.status(200).json({
-          message: 'Successfully deleted customer',
-          id
-        })
-      }else{
-        response.status(500).json({
-          message: 'Could not delete customer',
-          id
-        })
-      }
+    if(deleted){
+      response.status(200).json({
+        message: 'Successfully deleted customer',
+        id
+      })
     }else{
-      response.status(404).json({
-        message: 'Customer not found',
+      response.status(500).json({
+        message: 'Could not delete customer',
         id
       })
     }
