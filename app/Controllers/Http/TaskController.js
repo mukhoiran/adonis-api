@@ -1,5 +1,7 @@
 'use strict'
 
+const Task = use('App/Models/Task')
+
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
@@ -17,19 +19,19 @@ class TaskController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async index ({ request, response, view }) {
-  }
+  async index ({ response }) {
+    const tasks = await Task.all()
 
-  /**
-   * Render a form to be used for creating a new task.
-   * GET tasks/create
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async create ({ request, response, view }) {
+    if (tasks) {
+      response.status(200).json({
+        message: 'Here are your tasks',
+        data: tasks
+      })
+    } else {
+      response.status(500).json({
+        message: 'Could not get your tasks.'
+      })
+    }
   }
 
   /**
@@ -41,6 +43,27 @@ class TaskController {
    * @param {Response} ctx.response
    */
   async store ({ request, response }) {
+    const task = new Task()
+
+    const { name, description, project_id } = request.post()
+
+    task.name = name
+    task.description = description
+    task.project_id = project_id
+
+    const saved = await task.save()
+
+    if (saved) {
+      response.status(201).json({
+        message: 'Created a new task.',
+        data: task
+      })
+    } else {
+      response.status(500).json({
+        message: 'Could not create your task.',
+        data: { name, description, project_id }
+      })
+    }
   }
 
   /**
@@ -52,19 +75,20 @@ class TaskController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
-  }
+  async show ({ params: {id}, request, response }) {
+    const task = await Task.find(id)
 
-  /**
-   * Render a form to update an existing task.
-   * GET tasks/:id/edit
-   *
-   * @param {object} ctx
-   * @param {Request} ctx.request
-   * @param {Response} ctx.response
-   * @param {View} ctx.view
-   */
-  async edit ({ params, request, response, view }) {
+    if (task) {
+      response.status(200).json({
+        message: 'Here is your task.',
+        data: task
+      })
+    } else {
+      response.status(404).json({
+        message: 'Task not found.',
+        id
+      })
+    }
   }
 
   /**
@@ -75,7 +99,68 @@ class TaskController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
+  async update ({ params:{id}, request, response }) {
+    const task = await Task.find(id)
+
+    if (task) {
+      const { name, description, project_id } = request.post()
+
+      task.name = name
+      task.description = description
+      task.project_id = project_id
+
+      const saved = await task.save()
+
+      if (saved) {
+        response.status(200).json({
+          message: 'Updated task.',
+          data: task
+        })
+      } else {
+        response.status(500).json({
+          message: 'Could not update your task.',
+          data: { name, description, project_id }
+        })
+      }
+    } else {
+      response.status(404).json({
+        message: 'Task not found.',
+        id
+      })
+    }
+  }
+
+  /**
+   * Delete a task with id.
+   * DELETE tasks/:id
+   *
+   * @param {object} ctx
+   * @param {Request} ctx.request
+   * @param {Response} ctx.response
+   */
+  async delete ({ params:{id}, response }) {
+    const task = await Task.find(id)
+
+    if (task) {
+      const deleted = await task.delete()
+
+      if (deleted) {
+        response.status(200).json({
+          message: 'Deleted task.',
+          id
+        })
+      } else {
+        response.status(500).json({
+          message: 'Could not delete your task.',
+          id
+        })
+      }
+    } else {
+      response.status(404).json({
+        message: 'Task not found.',
+        id
+      })
+    }
   }
 
   /**
