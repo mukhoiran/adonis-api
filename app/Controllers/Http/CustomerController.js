@@ -1,5 +1,8 @@
 'use strict'
 
+const Customer = use('App/Models/Customer')
+const Database = use('Database')
+
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
 /** @typedef {import('@adonisjs/framework/src/View')} View */
@@ -17,20 +20,20 @@ class CustomerController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async index ({ request, response, view }) {
-  }
+  async index ({ response }) {
+    const customers = await Customer.all()
 
-  // /**
-  //  * Render a form to be used for creating a new customer.
-  //  * GET customers/create
-  //  *
-  //  * @param {object} ctx
-  //  * @param {Request} ctx.request
-  //  * @param {Response} ctx.response
-  //  * @param {View} ctx.view
-  //  */
-  // async create ({ request, response, view }) {
-  // }
+    if(customers){
+      response.status(200).json({
+        message: 'Here are your customers',
+        data: customers
+      })
+    }else{
+      response.status(500).json({
+        message: 'Could not fetch the customers'
+      })
+    }
+  }
 
   /**
    * Create/save a new customer.
@@ -41,6 +44,25 @@ class CustomerController {
    * @param {Response} ctx.response
    */
   async store ({ request, response }) {
+    const customer = new Customer()
+
+    const { name, description } = request.post()
+
+    customer.name = name
+    customer.description = description
+
+    const saved = await customer.save()
+    if(saved){
+      response.status(201).json({
+        message: 'Successfully created a new customer.',
+        data: customer
+      })
+    }else{
+      response.status(500).json({
+        message: 'Could not create customer',
+        data: { name, description }
+      })
+    }
   }
 
   /**
@@ -52,31 +74,91 @@ class CustomerController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
+  async show ({ params:{id}, response }) {
+    const customer = await Customer.find(id)
+
+    if(customer){
+      response.status(200).json({
+        message: 'Here is your customer',
+        customer
+      })
+    }else{
+      response.status(404).json({
+        message: 'Customer not found',
+        id
+      })
+    }
   }
 
   /**
-   * Render a form to update an existing customer.
-   * GET customers/:id/edit
+   * Update customer details.
+   * PUT or PATCH customers/:id
    *
    * @param {object} ctx
    * @param {Request} ctx.request
    * @param {Response} ctx.response
-   * @param {View} ctx.view
    */
-  // async edit ({ params, request, response, view }) {
-  // }
-  //
-  // /**
-  //  * Update customer details.
-  //  * PUT or PATCH customers/:id
-  //  *
-  //  * @param {object} ctx
-  //  * @param {Request} ctx.request
-  //  * @param {Response} ctx.response
-  //  */
-  // async update ({ params, request, response }) {
-  // }
+  async update ({ params:{id}, request, response }) {
+    const { name, description } = request.post()
+
+    const customer = await Customer.find(id)
+
+    if(customer){
+      customer.name = name
+      customer.description = description
+
+      const updated = await customer.save()
+      if(updated){
+        response.status(200).json({
+          message: 'Successfully updated customer',
+          id
+        })
+      }else{
+        response.status(500).json({
+          message: 'Could not update customer',
+          id
+        })
+      }
+    }else{
+      response.status(404).json({
+        message: 'Customer not found',
+        id
+      })
+    }
+  }
+
+  /**
+   * Delete a customer with id.
+   * DELETE customers/:id
+   *
+   * @param {object} ctx
+   * @param {Request} ctx.request
+   * @param {Response} ctx.response
+   */
+  async delete ({ params:{id}, response }) {
+    const customer = await Customer.find(id)
+
+    if(customer){
+      const deleted = await customer.delete()
+
+      if(deleted){
+        response.status(200).json({
+          message: 'Successfully deleted customer',
+          id
+        })
+      }else{
+        response.status(500).json({
+          message: 'Could not delete customer',
+          id
+        })
+      }
+    }else{
+      response.status(404).json({
+        message: 'Customer not found',
+        id
+      })
+    }
+  }
 
   /**
    * Delete a customer with id.
